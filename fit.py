@@ -1,3 +1,6 @@
+#!/usr/bin/env
+# -*- coding: UTF-8 -*-
+
 # 只对 7~17 岁数据拟合
 
 import numpy as np
