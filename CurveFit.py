@@ -39,12 +39,14 @@ def log_likelyhood(data, ref):
     ref_y_array = vref(data.x_array)
     return np.sum(((data.y_array - ref_y_array)/data.std_deviations)**2)
 
-def fit(data, std_curve, std_rectangle, show = False):
+def fit(data, std_curve, std_rectangle, showResidual = False):
     def obj_func(rectangle):
         def rescaled_func(x):
             return rescale(std_curve, x, std_rectangle, rectangle)
         return log_likelyhood(data, rescaled_func)
     result = optimize.minimize(obj_func, std_rectangle)
+    if (showResidual == True):
+        print(obj_func(result.x))
     def fitted_curve(x):
         return rescale(std_curve, x, std_rectangle, result.x)
     vfitted_curve = np.vectorize(fitted_curve)
