@@ -29,6 +29,7 @@ if __name__ == "__main__":
     jpn = readData("csv/jpn.csv")
     kor = readData("csv/kor.csv")
     WHO = readData("csv/WHO.csv")
+    bjhd2010 = readData("csv/bjhd2010.csv").truncate(11)
 
     # Set up plot
     x = np.linspace(6, 18, 100)
@@ -42,15 +43,15 @@ if __name__ == "__main__":
     ax.yaxis.set_ticks_position('left')
 
     # Fit and plot
-    curve = CurveFit.fit(kor,
+    curve = CurveFit.fit(bjhd2010,
                          chn2005.linear_interpolation, chn2005_rectangle,
-                         showResidual=False)
+                         showResidual=True)
     y = curve(x)
     print("18 year old prediction", curve(18.0))
-    #plt.errorbar(qingdao2014urban.x_array, qingdao2014urban.y_array, 2*qingdao2014urban.std_deviations, fmt='x')
-    plt.plot(kor.x_array, kor.y_array, 'x')
-    plt.plot(x,y,'r', label="Fitted curve")
-    plt.savefig('kor_chn2005.png', dpi=600)
+    plt.errorbar(bjhd2010.x_array, bjhd2010.y_array, 2*bjhd2010.std_deviations, fmt='xr')
+    #plt.plot(chn2005.x_array, chn2005.y_array)
+    plt.plot(x,y)
+    plt.show()
     
     # Use Leave-One-Out to test the fit's stablity
 
