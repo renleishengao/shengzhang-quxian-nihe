@@ -21,6 +21,9 @@ class Data:
         y_array_truncated = np.delete(self.y_array, n)
         std_deviations_truncated = np.delete(self.std_deviations, n)
         return Data(x_array_truncated, y_array_truncated, std_deviations_truncated)
+    
+    def get_linear_interpolation(self):
+        return self.linear_interpolation
 
 class LinearTransform:
     def __init__(self, arr, fix_scaling=None):
