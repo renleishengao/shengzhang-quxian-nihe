@@ -23,11 +23,15 @@ class Data:
         return Data(x_array_truncated, y_array_truncated, std_deviations_truncated)
 
 class LinearTransform:
-    def __init__(self, arr):
-        self.k_x = arr[0]
-        self.b_x = arr[1]
-        self.k_y = arr[2]
-        self.b_y = arr[3]
+    def __init__(self, arr, fix_scaling=None):
+        if fix_scaling == None or fix_scaling == '':
+            self.k_x, self.b_x, self.k_y, self.b_y = arr
+        elif fix_scaling == 'x':
+            self.k_x, self.b_x, self.k_y, self.b_y = np.insert(arr, 0, 1)
+        elif fix_scaling == 'y':
+            self.k_x, self.b_x, self.k_y, self.b_y = np.insert(arr, 2, 1)
+        elif fix_scaling == 'xy' or fix_scaling == 'yx':
+            self.k_x, self.b_x, self.k_y, self.b_y = np.array([1, arr[0], 1, arr[1]])
 
     def transform(self,func):
         def transformed_func(x):
@@ -36,18 +40,42 @@ class LinearTransform:
 
 # I should not have use ``rectangles''. That is a stupid way of scaling things...
 
-def rescale(func, x, rectangle_old, rectangle_new):
-    alpha = (x - rectangle_new[0])/(rectangle_new[1] - rectangle_new[0])
-    y = func((1-alpha) * rectangle_old[0] + alpha * rectangle_old[1])
-    beta = (y - rectangle_old[2])/(rectangle_old[3] - rectangle_old[2])
-    y_new = (1-beta) * rectangle_new[2] + beta * rectangle_new[3]
-    return y_new
-
 def log_likelihood(data, ref):
     vref = np.vectorize(ref)
     ref_y_array = vref(data.x_array)
     return np.sum(((data.y_array - ref_y_array)/data.std_deviations)**2)
 
+def get_init_arr(fix_scaling):
+    if fix_scaling == None or fix_scaling == '':
+        return np.array([1,0,1,0])
+    elif fix_scaling == 'x':
+        return np.array([0,1,0])
+    elif fix_scaling == 'y':
+        return np.array([1,0,0])
+    elif fix_scaling == 'xy' or fix_scaling == 'yx':
+        return np.array([0,0])
+
+def fit(data, std_curve, fix_scaling=None):
+    def obj_func(incomplete_ltransform_arr):
+        transform = LinearTransform(incomplete_ltransform_arr,fix_scaling=fix_scaling).transform
+        return log_likelihood(data, transform(std_curve))
+    id_ltransform_arr = get_init_arr(fix_scaling)
+    result = optimize.minimize(obj_func, id_ltransform_arr)
+    transform = LinearTransform(result.x, fix_scaling=fix_scaling).transform
+    return result.x, transform(std_curve), obj_func(result.x)
+
+def multiple_fit(datas, std_curves, fix_scaling=None):
+    def obj_func(incomplete_ltransform_arr):
+        transform = LinearTransform(incomplete_ltransform_arr,fix_scaling=fix_scaling).transform
+        vtransform = np.vectorize(transform)
+        return np.sum(np.vectorize(log_likelihood)(datas, vtransform(std_curves)))
+    id_ltransform_arr = get_init_arr(fix_scaling)
+    result = optimize.minimize(obj_func, id_ltransform_arr)
+    transform = LinearTransform(result.x, fix_scaling=fix_scaling).transform
+    return result.x, np.array([transform(std_curve) for std_curve in std_curves]), obj_func(result.x)
+
+# old code
+'''
 def get_full_rectangle(incomplete_rectangle, std_rectangle, fix_scaling):
     if fix_scaling == None or fix_scaling == '':
         return incomplete_rectangle
@@ -89,31 +117,10 @@ def fit(data, std_curve, std_rectangle, fix_scaling=None):
     vfitted_curve = np.vectorize(fitted_curve)
     return full_result_rectangle, vfitted_curve, obj_func(result.x)
 
-def get_complete_arr(incomplete_array, fix_scaling):
-    if fix_scaling == None or fix_scaling == '':
-        return incomplete_array
-    elif fix_scaling == 'x':
-        return np.insert(incomplete_array, 0, 1)
-    elif fix_scaling == 'y':
-        return np.insert(incomplete_array, 2, 1)
-    elif fix_scaling == 'xy' or fix_scaling == 'yx':
-        return np.array([1, incomplete_array[0], 1, incomplete_array[1]])
-
-def get_init_arr(fix_scaling):
-    if fix_scaling == None or fix_scaling == '':
-        return np.array([1,0,1,0])
-    elif fix_scaling == 'x':
-        return np.array([0,1,0])
-    elif fix_scaling == 'y':
-        return np.array([1,0,0])
-    elif fix_scaling == 'xy' or fix_scaling == 'yx':
-        return np.array([0,0])
-
-def fit_new(data, std_curve, fix_scaling=None):
-    def obj_func(incomplete_ltransform_arr):
-        return log_likelihood(data, LinearTransform(get_complete_arr(incomplete_ltransform_arr,fix_scaling)).transform(std_curve))
-    id_ltransform_arr = get_init_arr(fix_scaling)
-    result = optimize.minimize(obj_func, id_ltransform_arr)
-    target_ltransform = LinearTransform(get_complete_arr(result.x, fix_scaling))
-    vfitted_curve = np.vectorize(target_ltransform.transform(std_curve))
-    return result.x, vfitted_curve, obj_func(result.x)
+    def rescale(func, x, rectangle_old, rectangle_new):
+        alpha = (x - rectangle_new[0])/(rectangle_new[1] - rectangle_new[0])
+        y = func((1-alpha) * rectangle_old[0] + alpha * rectangle_old[1])
+        beta = (y - rectangle_old[2])/(rectangle_old[3] - rectangle_old[2])
+        y_new = (1-beta) * rectangle_new[2] + beta * rectangle_new[3]
+        return y_new
+'''
