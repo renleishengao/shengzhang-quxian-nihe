@@ -1,8 +1,6 @@
 #!/usr/bin/env
 # -*- coding: UTF-8 -*-
 
-# 只对 7~17 岁数据拟合
-
 import numpy as np
 from scipy import optimize
 
@@ -39,15 +37,44 @@ def log_likelihood(data, ref):
     ref_y_array = vref(data.x_array)
     return np.sum(((data.y_array - ref_y_array)/data.std_deviations)**2)
 
-def fit(data, std_curve, std_rectangle, showResidual = False):
-    def obj_func(rectangle):
-        def rescaled_func(x):
-            return rescale(std_curve, x, std_rectangle, rectangle)
+def get_full_rectangle(incomplete_rectangle, std_rectangle, fix_scaling):
+    if (fix_scaling == None):
+        return incomplete_rectangle
+    elif (fix_scaling == 'x'):
+        return np.array([incomplete_rectangle[0], incomplete_rectangle[0] + std_rectangle[1] - std_rectangle[0],
+                         incomplete_rectangle[1], incomplete_rectangle[2]])
+    elif (fix_scaling == 'y'):
+        return np.array([incomplete_rectangle[0], incomplete_rectangle[1],
+                         incomplete_rectangle[2], incomplete_rectangle[2] + std_rectangle[3] - std_rectangle[2]])
+    elif (fix_scaling == 'xy' or fix_scaling == 'yx'):
+        return np.array([incomplete_rectangle[0], incomplete_rectangle[0] + std_rectangle[1] - std_rectangle[0],
+                         incomplete_rectangle[1], incomplete_rectangle[1] + std_rectangle[3] - std_rectangle[2]])
+    else:
+        raise ValueError('A very specific bad thing happened.')
+
+def get_incomplete_rectangle(full_rectangle, fix_scaling):
+    if (fix_scaling == None):
+        return full_rectangle
+    elif (fix_scaling == 'x'):
+        return np.delete(full_rectangle, 1)
+    elif (fix_scaling == 'y'):
+        return np.delete(full_rectangle, 3)
+    elif (fix_scaling == 'xy' or fix_scaling == 'yx'):
+        return np.delete(full_rectangle, [1,3])
+    else:
+        raise ValueError('A very specific bad thing happened.')
+
+
+def fit(data, std_curve, std_rectangle, fix_scaling=None):
+    def obj_func(incomplete_rectangle):
+        rectangle = get_full_rectangle(incomplete_rectangle, std_rectangle, fix_scaling)
+        def rescaled_func(var):
+            return rescale(std_curve, var, std_rectangle, rectangle)
         return log_likelihood(data, rescaled_func)
-    result = optimize.minimize(obj_func, std_rectangle)
-    if (showResidual == True):
-        print(obj_func(result.x))
-    def fitted_curve(x):
-        return rescale(std_curve, x, std_rectangle, result.x)
+    incomplete_std_rectangle = get_incomplete_rectangle(std_rectangle, fix_scaling)
+    result = optimize.minimize(obj_func, incomplete_std_rectangle)
+    full_result_rectangle = get_full_rectangle(result.x, std_rectangle, fix_scaling)
+    def fitted_curve(var):
+        return rescale(std_curve, var, std_rectangle, full_result_rectangle)
     vfitted_curve = np.vectorize(fitted_curve)
-    return vfitted_curve
+    return full_result_rectangle, vfitted_curve, obj_func(result.x)
