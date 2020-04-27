@@ -36,6 +36,9 @@ class LinearTransform:
         elif fix_scaling == 'xy' or fix_scaling == 'yx':
             self.k_x, self.b_x, self.k_y, self.b_y = np.array([1, arr[0], 1, arr[1]])
 
+    def __str__(self):
+        return "Linear transform with k_x = {}, b_x = {}, k_y = {}, b_y = {}".format(self.k_x,self.b_x,self.k_y,self.b_y)
+
     def transform(self,func):
         def transformed_func(x):
             return self.k_y * func(self.k_x * x + self.b_x) + self.b_y
@@ -64,8 +67,9 @@ def fit(data, std_curve, fix_scaling=None):
         return log_likelihood(data, transform(std_curve))
     id_ltransform_arr = get_init_arr(fix_scaling)
     result = optimize.minimize(obj_func, id_ltransform_arr)
-    transform = LinearTransform(result.x, fix_scaling=fix_scaling).transform
-    return result.x, transform(std_curve), obj_func(result.x)
+    target_ltransform = LinearTransform(result.x, fix_scaling=fix_scaling)
+    transform = target_ltransform.transform
+    return target_ltransform, transform(std_curve), obj_func(result.x)
 
 def multiple_fit(datas, std_curves, fix_scaling=None):
     def obj_func(incomplete_ltransform_arr):
@@ -74,8 +78,9 @@ def multiple_fit(datas, std_curves, fix_scaling=None):
         return np.sum(np.vectorize(log_likelihood)(datas, vtransform(std_curves)))
     id_ltransform_arr = get_init_arr(fix_scaling)
     result = optimize.minimize(obj_func, id_ltransform_arr)
-    transform = LinearTransform(result.x, fix_scaling=fix_scaling).transform
-    return result.x, np.array([transform(std_curve) for std_curve in std_curves]), obj_func(result.x)
+    target_ltransform = LinearTransform(result.x, fix_scaling=fix_scaling)
+    transform = target_ltransform.transform
+    return target_ltransform, np.array([transform(std_curve) for std_curve in std_curves]), obj_func(result.x)
 
 # old code
 '''
