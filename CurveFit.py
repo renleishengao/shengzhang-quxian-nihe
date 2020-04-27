@@ -22,10 +22,21 @@ class Data:
         std_deviations_truncated = np.delete(self.std_deviations, n)
         return Data(x_array_truncated, y_array_truncated, std_deviations_truncated)
 
+class LinearTransform:
+    def __init__(self, arr):
+        self.k_x = arr[0]
+        self.b_x = arr[1]
+        self.k_y = arr[2]
+        self.b_y = arr[3]
+
+    def transform(self,func):
+        def transformed_func(x):
+            return self.k_y * func(self.k_x * x + self.b_x) + self.b_y
+        return transformed_func
+
+# I should not have use ``rectangles''. That is a stupid way of scaling things...
+
 def rescale(func, x, rectangle_old, rectangle_new):
-    # 想象一个矩形 rectangle_old 把 func 的正好框住，
-    # 现在通过线性变换把 rectangle_old 变成 rectangle_new
-    # 返回线性变换后的函数
     alpha = (x - rectangle_new[0])/(rectangle_new[1] - rectangle_new[0])
     y = func((1-alpha) * rectangle_old[0] + alpha * rectangle_old[1])
     beta = (y - rectangle_old[2])/(rectangle_old[3] - rectangle_old[2])
@@ -38,7 +49,7 @@ def log_likelihood(data, ref):
     return np.sum(((data.y_array - ref_y_array)/data.std_deviations)**2)
 
 def get_full_rectangle(incomplete_rectangle, std_rectangle, fix_scaling):
-    if (fix_scaling == None):
+    if fix_scaling == None or fix_scaling == '':
         return incomplete_rectangle
     elif (fix_scaling == 'x'):
         return np.array([incomplete_rectangle[0], incomplete_rectangle[0] + std_rectangle[1] - std_rectangle[0],
@@ -53,7 +64,7 @@ def get_full_rectangle(incomplete_rectangle, std_rectangle, fix_scaling):
         raise ValueError('A very specific bad thing happened.')
 
 def get_incomplete_rectangle(full_rectangle, fix_scaling):
-    if (fix_scaling == None):
+    if fix_scaling == None or fix_scaling == '':
         return full_rectangle
     elif (fix_scaling == 'x'):
         return np.delete(full_rectangle, 1)
@@ -63,7 +74,6 @@ def get_incomplete_rectangle(full_rectangle, fix_scaling):
         return np.delete(full_rectangle, [1,3])
     else:
         raise ValueError('A very specific bad thing happened.')
-
 
 def fit(data, std_curve, std_rectangle, fix_scaling=None):
     def obj_func(incomplete_rectangle):
@@ -78,3 +88,32 @@ def fit(data, std_curve, std_rectangle, fix_scaling=None):
         return rescale(std_curve, var, std_rectangle, full_result_rectangle)
     vfitted_curve = np.vectorize(fitted_curve)
     return full_result_rectangle, vfitted_curve, obj_func(result.x)
+
+def get_complete_arr(incomplete_array, fix_scaling):
+    if fix_scaling == None or fix_scaling == '':
+        return incomplete_array
+    elif fix_scaling == 'x':
+        return np.insert(incomplete_array, 0, 1)
+    elif fix_scaling == 'y':
+        return np.insert(incomplete_array, 2, 1)
+    elif fix_scaling == 'xy' or fix_scaling == 'yx':
+        return np.array([1, incomplete_array[0], 1, incomplete_array[1]])
+
+def get_init_arr(fix_scaling):
+    if fix_scaling == None or fix_scaling == '':
+        return np.array([1,0,1,0])
+    elif fix_scaling == 'x':
+        return np.array([0,1,0])
+    elif fix_scaling == 'y':
+        return np.array([1,0,0])
+    elif fix_scaling == 'xy' or fix_scaling == 'yx':
+        return np.array([0,0])
+
+def fit_new(data, std_curve, fix_scaling=None):
+    def obj_func(incomplete_ltransform_arr):
+        return log_likelihood(data, LinearTransform(get_complete_arr(incomplete_ltransform_arr,fix_scaling)).transform(std_curve))
+    id_ltransform_arr = get_init_arr(fix_scaling)
+    result = optimize.minimize(obj_func, id_ltransform_arr)
+    target_ltransform = LinearTransform(get_complete_arr(result.x, fix_scaling))
+    vfitted_curve = np.vectorize(target_ltransform.transform(std_curve))
+    return result.x, vfitted_curve, obj_func(result.x)

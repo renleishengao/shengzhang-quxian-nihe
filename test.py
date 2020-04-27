@@ -22,36 +22,45 @@ def readData(fileAddress):
 if __name__ == "__main__":
 
     # Data
-    chn2005_rectangle = [6.5, 17.5, 120.7, 172.5]
     chn2005 = readData("csv/chn2005.csv")
+    std_rectangle = [6.5,17.5,120.7,172.5]
     
     qingdao2014urban = readData("csv/qingdao2014urban.csv")
     jpn = readData("csv/jpn.csv")
     kor = readData("csv/kor.csv")
     WHO = readData("csv/WHO.csv")
     bjhd2010 = readData("csv/bjhd2010.csv").truncate(11)
+    beijing2001cohort = readData("csv/beijing2001cohort.csv")
+    beijing2014diaoyan = readData("csv/beijing2014diaoyan.csv")
+    cd2014urban = readData("csv/cd2014urban.csv")
+    shxh2014diaoyan = readData("csv/shxh2014diaoyan.csv")
+
+    # Fit
+    cd2014urban_curve_new = CurveFit.fit_new(cd2014urban, chn2005.linear_interpolation)[1]
+    cd2014urban_curve = CurveFit.fit(cd2014urban, chn2005.linear_interpolation, std_rectangle)[1]
+    print(cd2014urban_curve(18.0))
+    print(cd2014urban_curve_new(18.0))
 
     # Set up plot
-    x = np.linspace(6, 18, 100)
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1)
-    #ax.spines['left'].set_position('center')
-    #ax.spines['bottom'].set_position('center')
-    ax.spines['right'].set_color('none')
-    ax.spines['top'].set_color('none')
-    ax.xaxis.set_ticks_position('bottom')
-    ax.yaxis.set_ticks_position('left')
+    #x = np.linspace(6, 18, 100)
+    #fig = plt.figure()
+    #ax = fig.add_subplot(1, 1, 1)
+    # Plot 
+    #ax.scatter(shxh2014diaoyan.x_array, shxh2014diaoyan.y_array, color='r')
+    #ax.errorbar(cd2014urban.x_array, cd2014urban.y_array,2*cd2014urban.std_deviations, fmt='xr', label='cd2014-chengshi-diaoyan')
+    #ax.plot(x, shxh2014_curve(x), color='tab:pink', label="cd2014-chengshi-diaoyan-nihe")
 
-    # Fit and plot
-    curve = CurveFit.fit(bjhd2010,
-                         chn2005.linear_interpolation, chn2005_rectangle,
-                         showResidual=True)
-    y = curve(x)
-    print("18 year old prediction", curve(18.0))
-    plt.errorbar(bjhd2010.x_array, bjhd2010.y_array, 2*bjhd2010.std_deviations, fmt='xr')
-    #plt.plot(chn2005.x_array, chn2005.y_array)
-    plt.plot(x,y)
-    plt.show()
+    # bj14 = r/tab:pink, bj01 = b/tab:cyan, jpn = g:tab:olive
+    '''ax.errorbar(beijing2014diaoyan.x_array, beijing2014diaoyan.y_array,2*beijing2014diaoyan.std_deviations, fmt='xr', label='bj2014-diaoyan')
+    ax.plot(x, bj14_curve(x), color='tab:pink', label="bj2014-diaoyan-nihe")
+    ax.scatter(beijing2001cohort.x_array, beijing2001cohort.y_array, color = 'b', label='bj2001-chusheng')
+    ax.plot(x, bj01cohort_curve(x), color='tab:cyan', label='bj2001-chusheng-nihe')
+    ax.scatter(jpn.x_array, jpn.y_array, color='g', label='riben')
+    ax.plot(x, jpn_curve(x), color='tab:olive', label='riben-nihe')'''
+
+    #ax.legend()
+    #ax.grid(True)
+    #plt.show()
     
     # Use Leave-One-Out to test the fit's stablity
 
