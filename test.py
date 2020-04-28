@@ -15,7 +15,7 @@ def readData(fileAddress):
     if (len(dataList) >= 3):
         sampleSizes = dataList[2]
         stdDeviations = dataList[3]
-        return CurveFit.Data(ages, heights, stdDeviations/np.sqrt(sampleSizes))
+        return CurveFit.Data(ages, heights, stdDeviations/np.sqrt(sampleSizes), system_error=0.3)
     else:
         return CurveFit.Data(ages, heights, np.array([1.] * len(ages)))
 

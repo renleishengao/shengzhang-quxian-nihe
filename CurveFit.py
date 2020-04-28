@@ -5,10 +5,10 @@ import numpy as np
 from scipy import optimize
 
 class Data:
-    def __init__(self, x_array, y_array, std_deviations):
+    def __init__(self, x_array, y_array, std_deviations, system_error=0.0):
         self.x_array = x_array
         self.y_array = y_array
-        self.std_deviations = std_deviations
+        self.std_deviations = np.sqrt(std_deviations**2 + system_error**2)
         self.linear_interpolate()
 
     def linear_interpolate(self):
