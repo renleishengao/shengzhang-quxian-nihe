@@ -24,30 +24,33 @@ if __name__ == "__main__":
     # Data
     zg05nan = readData("csv/zhongguo05nan.csv")
     zg05nv  = readData("csv/zhongguo05nv.csv")
-    cd14chengnan = readData("csv/chengdu14chengnan.csv").truncate(11)
-    cd14chengnv  = readData("csv/chengdu14chengnv.csv").truncate(11)
+    cdch16nan = readData("csv/chengduchenghua16nan.csv").truncate(12)
+    cdch16nv  = readData("csv/chengduchenghua16nv.csv").truncate(12)
 
     # Fit
-    fit = CurveFit.multiple_fit([cd14chengnan,cd14chengnv], 
+    '''fit = CurveFit.multiple_fit([cd14chengnan,cd14chengnv], 
                               [zg05nan.linear_interpolation, zg05nv.linear_interpolation],
-                              fix_scaling="x")
+                              fix_scaling="x")'''
+    fit_nan = CurveFit.fit(cdch16nan, zg05nan.get_linear_interpolation(),fix_scaling='')
+    fit_nv  = CurveFit.fit(cdch16nv , zg05nv.get_linear_interpolation() ,fix_scaling='')
 
-    cd14chengnan_curve, cd14chengnv_curve = fit[1]
-    print(fit[2])
+    #cd14chengnan_curve, cd14chengnv_curve = fit[1]
+    nan_curve, nv_curve = fit_nan[1], fit_nv[1]
     
-    vcd14chengnan_curve = np.vectorize(cd14chengnan_curve)
-    vcd14chengnv_curve  = np.vectorize(cd14chengnv_curve)
+    nan_curve = np.vectorize(nan_curve)
+    nv_curve  = np.vectorize(nv_curve)
+
+    print(fit_nan[2], fit_nv[2])
 
     # Set up plot
-    x = np.linspace(7, 18, 100)
+    x = np.linspace(6, 18, 100)
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
     # Plot 
-    #ax.scatter(shxh2014diaoyan.x_array, shxh2014diaoyan.y_array, color='r')
-    ax.errorbar(cd14chengnan.x_array, cd14chengnan.y_array,2*cd14chengnan.std_deviations, fmt='xr', label='cd14-chengnan')
-    ax.errorbar(cd14chengnv.x_array , cd14chengnv.y_array ,2*cd14chengnv.std_deviations , fmt='xb', label='cd14-chengnv')
-    ax.plot(x, vcd14chengnan_curve(x), color='tab:pink', label="cd14-chengnan-nihe")
-    ax.plot(x, vcd14chengnv_curve(x) , color='tab:cyan', label="cd14-chengnv-nihe")
+    ax.errorbar(cdch16nan.x_array, cdch16nan.y_array,2*cdch16nan.std_deviations, fmt='xr', label='cd14-chengnan')
+    ax.errorbar(cdch16nv.x_array , cdch16nv.y_array ,2*cdch16nv.std_deviations , fmt='xb', label='cd14-chengnv')
+    ax.plot(x, nan_curve(x), color='tab:pink', label="cd14-chengnan-nihe")
+    ax.plot(x, nv_curve(x) , color='tab:cyan', label="cd14-chengnv-nihe")
 
     ax.legend()
     ax.grid(True)
