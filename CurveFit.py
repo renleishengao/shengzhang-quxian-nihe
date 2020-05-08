@@ -25,6 +25,20 @@ class Data:
     def get_linear_interpolation(self):
         return self.linear_interpolation
 
+    def fit_by(self, std_curve, fix_scaling=None):
+        def obj_func(incomplete_ltransform_arr):
+            transform = LinearTransform(incomplete_ltransform_arr,fix_scaling=fix_scaling).transform
+            return log_likelihood(self, transform(std_curve))
+        id_ltransform_arr = get_init_arr(fix_scaling)
+        result = optimize.minimize(obj_func, id_ltransform_arr)
+        target_ltransform = LinearTransform(result.x, fix_scaling=fix_scaling)
+        transform = target_ltransform.transform
+        self.fit = Fit(target_ltransform, transform(std_curve), obj_func(result.x))
+        return self
+
+    def get_fit(self):
+        return self.fit
+
 class LinearTransform:
     def __init__(self, arr, fix_scaling=None):
         if fix_scaling == None or fix_scaling == '':
@@ -43,6 +57,12 @@ class LinearTransform:
         def transformed_func(x):
             return self.k_y * func(self.k_x * x + self.b_x) + self.b_y
         return transformed_func
+
+class Fit:
+    def __init__(self, ltransform, fitted_curve, residual):
+        self.ltransform = ltransform
+        self.fitted_curve = fitted_curve
+        self.residual = residual
 
 # I should not have use ``rectangles''. That is a stupid way of scaling things...
 
@@ -69,7 +89,7 @@ def fit(data, std_curve, fix_scaling=None):
     result = optimize.minimize(obj_func, id_ltransform_arr)
     target_ltransform = LinearTransform(result.x, fix_scaling=fix_scaling)
     transform = target_ltransform.transform
-    return target_ltransform, transform(std_curve), obj_func(result.x)
+    return Fit(target_ltransform, transform(std_curve), obj_func(result.x))
 
 def multiple_fit(datas, std_curves, fix_scaling=None):
     def obj_func(incomplete_ltransform_arr):

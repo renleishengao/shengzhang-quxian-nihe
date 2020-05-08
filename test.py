@@ -21,11 +21,71 @@ def readData(fileAddress):
 
 if __name__ == "__main__":
 
-    # 环渤海：北京、天津、青岛
-    # Data
     # Ref data
-    zg05nan = readData("csv/zhongguo05nan.csv")
-    zg05nv  = readData("csv/zhongguo05nv.csv")
+    中国05男数据 = readData("csv/zhongguo05nan.csv")
+    中国05女数据  = readData("csv/zhongguo05nv.csv")
+
+    # 分析昌吉市2016年健康体检数据
+    # 注意！这不是昌吉州数据！
+    昌吉男数据 = readData("csv/changji2016nan.csv").fit_by(中国05男数据.get_linear_interpolation())
+    昌吉女数据 = readData("csv/changji2016nv.csv").fit_by(中国05女数据.get_linear_interpolation())
+
+    # 打印残差
+    print(昌吉男数据.get_fit().residual)
+    print(昌吉女数据.get_fit().residual)
+
+    x = np.linspace(7, 18, 100)
+    图 = plt.figure()
+    坐标轴 = 图.add_subplot(1, 1, 1)
+
+    坐标轴.errorbar(昌吉男数据.x_array, 昌吉男数据.y_array, 2*昌吉男数据.std_deviations, fmt="xr", label="Changji-Nan-Shice")
+    坐标轴.plot(x, np.vectorize(昌吉男数据.get_fit().fitted_curve)(x),color="tab:pink", label="Changji-Nan-Nihe")
+    坐标轴.errorbar(昌吉女数据.x_array, 昌吉女数据.y_array, 2*昌吉女数据.std_deviations, fmt="xg", label="Changji-Nü-Shice")
+    坐标轴.plot(x, np.vectorize(昌吉女数据.get_fit().fitted_curve)(x),color="tab:olive", label="Changji-Nü-Nihe")
+
+    坐标轴.legend()
+    坐标轴.grid(True)
+
+    plt.savefig("changji-analysis.png",dpi=1200)
+
+    '''
+    # 分析青岛2002和2014年城男数据
+    年份组 = [2002, 2014]
+    地址映射 = {2002: "csv/qingdao02chengnan.csv", 2014: "csv/qingdao14chengnan.csv"}
+
+    # 分析残差
+    for 年龄 in np.arange(7.5,19.5,1):
+        青岛数据 = {年份: readData(地址映射[年份]).truncate(年龄-7.5) for 年份 in 年份组}
+        for 年份 in 年份组:
+            青岛数据[年份].fit_by(中国05男数据.get_linear_interpolation())
+        for 年份 in 年份组:
+            print(年龄, 年份, 青岛数据[年份].get_fit().residual)
+
+    # 配色方案
+    数据颜色 = {2002: 'r', 2014: 'g'}
+    拟合颜色 = {2002: 'tab:pink', 2014:'tab:olive'}
+
+    # 准备画图
+    '''
+    '''
+    x = np.linspace(7, 18, 100)
+    图 = plt.figure()
+    坐标轴 = 图.add_subplot(1, 1, 1)
+
+    for 年份 in 年份组:
+        坐标轴.errorbar(青岛数据[年份].x_array, 青岛数据[年份].y_array, 2*青岛数据[年份].std_deviations, 
+                    fmt='x{}'.format(数据颜色[年份]), label='{}-shice'.format(年份))
+        坐标轴.plot(x, np.vectorize(青岛数据[年份].get_fit().fitted_curve)(x),
+                    color=拟合颜色[年份], label='{}-nihe'.format(年份))
+    
+    坐标轴.legend()
+    坐标轴.grid(True)
+    plt.show()
+    '''
+
+    '''
+    # 环渤海——北京、天津、青岛——生长曲线拟合
+    # Data
 
     cities = ['beijing', 'tianjin', 'qingdao']
 
@@ -67,3 +127,4 @@ if __name__ == "__main__":
     ax_nv.legend()
     ax_nv.grid(True)
     plt.savefig("fit_nv.png",dpi=600)
+    '''
