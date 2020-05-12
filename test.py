@@ -15,7 +15,7 @@ def readData(fileAddress):
     if (len(dataList) >= 3):
         sampleSizes = dataList[2]
         stdDeviations = dataList[3]
-        return CurveFit.Data(ages, heights, stdDeviations/np.sqrt(sampleSizes), system_error=0.1/np.sqrt(3))
+        return CurveFit.Data(ages, heights, stdDeviations/np.sqrt(sampleSizes), system_error=0.5/np.sqrt(3))
     else:
         return CurveFit.Data(ages, heights, np.array([1.] * len(ages)))
 
@@ -25,28 +25,28 @@ if __name__ == "__main__":
     中国05男数据 = readData("csv/zhongguo05nan.csv")
     中国05女数据  = readData("csv/zhongguo05nv.csv")
 
-    # 分析昌吉市2016年健康体检数据
-    # 注意！这不是昌吉州数据！
-    昌吉男数据 = readData("csv/changji2016nan.csv").fit_by(中国05男数据.get_linear_interpolation())
-    昌吉女数据 = readData("csv/changji2016nv.csv").fit_by(中国05女数据.get_linear_interpolation())
+    # 分析成都市成华区2016年健康体检数据
+    成都男数据 = readData("csv/chengduchenghua2016nan.csv").truncate(12).fit_by(中国05男数据.get_linear_interpolation())
+    成都女数据 = readData("csv/chengduchenghua2016nv.csv").truncate(12).fit_by(中国05女数据.get_linear_interpolation())
 
     # 打印残差
-    print(昌吉男数据.get_fit().residual)
-    print(昌吉女数据.get_fit().residual)
+    print(成都男数据.get_fit().residual)
+    print(成都女数据.get_fit().residual)
 
-    x = np.linspace(7, 18, 100)
+    x = np.linspace(6, 19, 100)
     图 = plt.figure()
     坐标轴 = 图.add_subplot(1, 1, 1)
 
-    坐标轴.errorbar(昌吉男数据.x_array, 昌吉男数据.y_array, 2*昌吉男数据.std_deviations, fmt="xr", label="Changji-Nan-Shice")
-    坐标轴.plot(x, np.vectorize(昌吉男数据.get_fit().fitted_curve)(x),color="tab:pink", label="Changji-Nan-Nihe")
-    坐标轴.errorbar(昌吉女数据.x_array, 昌吉女数据.y_array, 2*昌吉女数据.std_deviations, fmt="xg", label="Changji-Nü-Shice")
-    坐标轴.plot(x, np.vectorize(昌吉女数据.get_fit().fitted_curve)(x),color="tab:olive", label="Changji-Nü-Nihe")
+    坐标轴.errorbar(成都男数据.x_array, 成都男数据.y_array, 2*成都男数据.std_deviations, fmt="xr", label="CDCH-Nan-Shice")
+    坐标轴.plot(x, np.vectorize(成都男数据.get_fit().fitted_curve)(x),color="tab:pink", label="CDCH-Nan-Nihe")
+    坐标轴.errorbar(成都女数据.x_array, 成都女数据.y_array, 2*成都女数据.std_deviations, fmt="xg", label="CDCH-Nü-Shice")
+    坐标轴.plot(x, np.vectorize(成都女数据.get_fit().fitted_curve)(x),color="tab:olive", label="CDCH-Nü-Nihe")
 
     坐标轴.legend()
     坐标轴.grid(True)
 
-    plt.savefig("changji-analysis.png",dpi=1200)
+    plt.show()
+    #plt.savefig("chengdu-analysis.png",dpi=600)
 
     '''
     # 分析青岛2002和2014年城男数据
