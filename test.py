@@ -15,7 +15,7 @@ def readData(fileAddress):
     if (len(dataList) >= 3):
         sampleSizes = dataList[2]
         stdDeviations = dataList[3]
-        return CurveFit.Data(ages, heights, stdDeviations/np.sqrt(sampleSizes), system_error=0.5/np.sqrt(3))
+        return CurveFit.Data(ages, heights, stdDeviations/np.sqrt(sampleSizes), system_error=0.1/np.sqrt(3))
     else:
         return CurveFit.Data(ages, heights, np.array([1.] * len(ages)))
 
@@ -25,6 +25,29 @@ if __name__ == "__main__":
     中国05男数据 = readData("csv/zhongguo05nan.csv")
     中国05女数据  = readData("csv/zhongguo05nv.csv")
 
+    # 分析乌鲁木齐汉族2010年学生体质与健康调研数据
+    乌鲁木齐城男数据 = readData("csv/xinjiang/urumqi2010chengnan.csv").truncate(11).fit_by(中国05男数据.get_linear_interpolation())
+    乌鲁木齐乡男数据 = readData("csv/xinjiang/urumqi2010xiangnan.csv").truncate(11).fit_by(中国05男数据.get_linear_interpolation())
+
+    # 打印残差
+    print(乌鲁木齐城男数据.get_fit().residual)
+    print(乌鲁木齐乡男数据.get_fit().residual)
+
+    x = np.linspace(6, 19, 100)
+    图 = plt.figure()
+    坐标轴 = 图.add_subplot(1, 1, 1)
+
+    坐标轴.errorbar(乌鲁木齐城男数据.x_array, 乌鲁木齐城男数据.y_array, 2*乌鲁木齐城男数据.std_deviations, fmt="xr", label="Urumqi-Chengnan-Shice")
+    坐标轴.plot(x, np.vectorize(乌鲁木齐城男数据.get_fit().fitted_curve)(x),color="tab:pink", label="Urumqi-Chengnan-Nihe")
+    坐标轴.errorbar(乌鲁木齐乡男数据.x_array, 乌鲁木齐乡男数据.y_array, 2*乌鲁木齐乡男数据.std_deviations, fmt="xg", label="Urumqi-Xiangnan-Shice")
+    坐标轴.plot(x, np.vectorize(乌鲁木齐乡男数据.get_fit().fitted_curve)(x),color="tab:olive", label="Urumqi-Xiangnan-Nihe")
+
+    坐标轴.legend()
+    坐标轴.grid(True)
+
+    plt.show()
+
+    '''
     # 分析成都市成华区2016年健康体检数据
     成都男数据 = readData("csv/chengduchenghua2016nan.csv").truncate(12).fit_by(中国05男数据.get_linear_interpolation())
     成都女数据 = readData("csv/chengduchenghua2016nv.csv").truncate(12).fit_by(中国05女数据.get_linear_interpolation())
@@ -47,6 +70,7 @@ if __name__ == "__main__":
 
     plt.show()
     #plt.savefig("chengdu-analysis.png",dpi=600)
+    '''
 
     '''
     # 分析青岛2002和2014年城男数据
