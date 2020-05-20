@@ -25,6 +25,29 @@ if __name__ == "__main__":
     中国05男数据 = readData("csv/zhongguo05nan.csv")
     中国05女数据  = readData("csv/zhongguo05nv.csv")
 
+    # 分析厦门2014年体质调研数据
+    成都男数据 = readData("csv/fujian/xiamen2014chengnan.csv").truncate(11).fit_by(中国05男数据.get_linear_interpolation())
+    成都女数据 = readData("csv/fujian/xiamen2014chengnv.csv").truncate(11).fit_by(中国05女数据.get_linear_interpolation())
+
+    # 打印残差
+    print(成都男数据.get_fit().residual)
+    print(成都女数据.get_fit().residual)
+
+    x = np.linspace(2, 22, 100)
+    图 = plt.figure()
+    坐标轴 = 图.add_subplot(1, 1, 1)
+
+    坐标轴.errorbar(成都男数据.x_array, 成都男数据.y_array, 2*成都男数据.std_deviations, fmt="xr", label="Xiamen-2014-Chengnan-Shice")
+    坐标轴.plot(x, np.vectorize(成都男数据.get_fit().fitted_curve)(x),color="tab:pink", label="Xiamen-2014-Chengnan-Nihe")
+    坐标轴.errorbar(成都女数据.x_array, 成都女数据.y_array, 2*成都女数据.std_deviations, fmt="xg", label="Xiamen-2014-Chengnv-Shice")
+    坐标轴.plot(x, np.vectorize(成都女数据.get_fit().fitted_curve)(x),color="tab:olive", label="Xiamen-2014-Chengnv-Nihe")
+
+    坐标轴.legend()
+    坐标轴.grid(True)
+
+    plt.show()
+
+    '''
     # 分析乌鲁木齐汉族2010年学生体质与健康调研数据
     乌鲁木齐城男数据 = readData("csv/xinjiang/urumqi2010chengnan.csv").truncate(11).fit_by(中国05男数据.get_linear_interpolation())
     乌鲁木齐乡男数据 = readData("csv/xinjiang/urumqi2010xiangnan.csv").truncate(11).fit_by(中国05男数据.get_linear_interpolation())
@@ -46,6 +69,8 @@ if __name__ == "__main__":
     坐标轴.grid(True)
 
     plt.show()
+    #plt.savefig("urumqi-analysis.png",dpi=600)
+    '''
 
     '''
     # 分析成都市成华区2016年健康体检数据
