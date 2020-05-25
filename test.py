@@ -19,161 +19,43 @@ def readData(fileAddress):
     else:
         return CurveFit.Data(ages, heights, np.array([1.] * len(ages)))
 
+def analyze(address, age, action = 'plot', delete_18_yo = False):
+    std_ref = readData("csv/zhongguo2005nan.csv").get_linear_interpolation()
+    data = readData(address)
+    if (delete_18_yo == True):
+        data.delete_age_group(18.5)
+    data.fit_by(std_ref)
+    fit = data.get_fit()
+    #print(fit.residual)
+    #print(fit.ltransform)
+
+    # Plot
+    if (action == 'plot'):
+        x = np.linspace(3.5, 20, 100)
+        图 = plt.figure()
+        坐标轴 = 图.add_subplot(1, 1, 1)
+        坐标轴.errorbar(data.x_array, data.y_array, 2*data.std_deviations, fmt="xr", label="Shice")
+        坐标轴.plot(x, np.vectorize(fit.fitted_curve)(x),color="tab:pink", label="Nihe")
+        坐标轴.legend()
+        坐标轴.grid(True)
+        plt.show()
+
+    if (action == 'print'):
+        print(fit.fitted_curve(18.5))
+
 if __name__ == "__main__":
-
-    # Ref data
-    中国05男数据 = readData("csv/zhongguo05nan.csv")
-    中国05女数据  = readData("csv/zhongguo05nv.csv")
-
-    # 分析厦门2014年体质调研数据
-    成都男数据 = readData("csv/fujian/xiamen2014chengnan.csv").truncate(11).fit_by(中国05男数据.get_linear_interpolation())
-    成都女数据 = readData("csv/fujian/xiamen2014chengnv.csv").truncate(11).fit_by(中国05女数据.get_linear_interpolation())
-
-    # 打印残差
-    print(成都男数据.get_fit().residual)
-    print(成都女数据.get_fit().residual)
-
-    x = np.linspace(2, 22, 100)
-    图 = plt.figure()
-    坐标轴 = 图.add_subplot(1, 1, 1)
-
-    坐标轴.errorbar(成都男数据.x_array, 成都男数据.y_array, 2*成都男数据.std_deviations, fmt="xr", label="Xiamen-2014-Chengnan-Shice")
-    坐标轴.plot(x, np.vectorize(成都男数据.get_fit().fitted_curve)(x),color="tab:pink", label="Xiamen-2014-Chengnan-Nihe")
-    坐标轴.errorbar(成都女数据.x_array, 成都女数据.y_array, 2*成都女数据.std_deviations, fmt="xg", label="Xiamen-2014-Chengnv-Shice")
-    坐标轴.plot(x, np.vectorize(成都女数据.get_fit().fitted_curve)(x),color="tab:olive", label="Xiamen-2014-Chengnv-Nihe")
-
-    坐标轴.legend()
-    坐标轴.grid(True)
-
-    plt.show()
-
-    '''
-    # 分析乌鲁木齐汉族2010年学生体质与健康调研数据
-    乌鲁木齐城男数据 = readData("csv/xinjiang/urumqi2010chengnan.csv").truncate(11).fit_by(中国05男数据.get_linear_interpolation())
-    乌鲁木齐乡男数据 = readData("csv/xinjiang/urumqi2010xiangnan.csv").truncate(11).fit_by(中国05男数据.get_linear_interpolation())
-
-    # 打印残差
-    print(乌鲁木齐城男数据.get_fit().residual)
-    print(乌鲁木齐乡男数据.get_fit().residual)
-
-    x = np.linspace(6, 19, 100)
-    图 = plt.figure()
-    坐标轴 = 图.add_subplot(1, 1, 1)
-
-    坐标轴.errorbar(乌鲁木齐城男数据.x_array, 乌鲁木齐城男数据.y_array, 2*乌鲁木齐城男数据.std_deviations, fmt="xr", label="Urumqi-Chengnan-Shice")
-    坐标轴.plot(x, np.vectorize(乌鲁木齐城男数据.get_fit().fitted_curve)(x),color="tab:pink", label="Urumqi-Chengnan-Nihe")
-    坐标轴.errorbar(乌鲁木齐乡男数据.x_array, 乌鲁木齐乡男数据.y_array, 2*乌鲁木齐乡男数据.std_deviations, fmt="xg", label="Urumqi-Xiangnan-Shice")
-    坐标轴.plot(x, np.vectorize(乌鲁木齐乡男数据.get_fit().fitted_curve)(x),color="tab:olive", label="Urumqi-Xiangnan-Nihe")
-
-    坐标轴.legend()
-    坐标轴.grid(True)
-
-    plt.show()
-    #plt.savefig("urumqi-analysis.png",dpi=600)
-    '''
-
-    '''
-    # 分析成都市成华区2016年健康体检数据
-    成都男数据 = readData("csv/chengduchenghua2016nan.csv").truncate(12).fit_by(中国05男数据.get_linear_interpolation())
-    成都女数据 = readData("csv/chengduchenghua2016nv.csv").truncate(12).fit_by(中国05女数据.get_linear_interpolation())
-
-    # 打印残差
-    print(成都男数据.get_fit().residual)
-    print(成都女数据.get_fit().residual)
-
-    x = np.linspace(6, 19, 100)
-    图 = plt.figure()
-    坐标轴 = 图.add_subplot(1, 1, 1)
-
-    坐标轴.errorbar(成都男数据.x_array, 成都男数据.y_array, 2*成都男数据.std_deviations, fmt="xr", label="CDCH-Nan-Shice")
-    坐标轴.plot(x, np.vectorize(成都男数据.get_fit().fitted_curve)(x),color="tab:pink", label="CDCH-Nan-Nihe")
-    坐标轴.errorbar(成都女数据.x_array, 成都女数据.y_array, 2*成都女数据.std_deviations, fmt="xg", label="CDCH-Nü-Shice")
-    坐标轴.plot(x, np.vectorize(成都女数据.get_fit().fitted_curve)(x),color="tab:olive", label="CDCH-Nü-Nihe")
-
-    坐标轴.legend()
-    坐标轴.grid(True)
-
-    plt.show()
-    #plt.savefig("chengdu-analysis.png",dpi=600)
-    '''
-
-    '''
-    # 分析青岛2002和2014年城男数据
-    年份组 = [2002, 2014]
-    地址映射 = {2002: "csv/qingdao02chengnan.csv", 2014: "csv/qingdao14chengnan.csv"}
-
-    # 分析残差
-    for 年龄 in np.arange(7.5,19.5,1):
-        青岛数据 = {年份: readData(地址映射[年份]).truncate(年龄-7.5) for 年份 in 年份组}
-        for 年份 in 年份组:
-            青岛数据[年份].fit_by(中国05男数据.get_linear_interpolation())
-        for 年份 in 年份组:
-            print(年龄, 年份, 青岛数据[年份].get_fit().residual)
-
-    # 配色方案
-    数据颜色 = {2002: 'r', 2014: 'g'}
-    拟合颜色 = {2002: 'tab:pink', 2014:'tab:olive'}
-
-    # 准备画图
-    '''
-    '''
-    x = np.linspace(7, 18, 100)
-    图 = plt.figure()
-    坐标轴 = 图.add_subplot(1, 1, 1)
-
-    for 年份 in 年份组:
-        坐标轴.errorbar(青岛数据[年份].x_array, 青岛数据[年份].y_array, 2*青岛数据[年份].std_deviations, 
-                    fmt='x{}'.format(数据颜色[年份]), label='{}-shice'.format(年份))
-        坐标轴.plot(x, np.vectorize(青岛数据[年份].get_fit().fitted_curve)(x),
-                    color=拟合颜色[年份], label='{}-nihe'.format(年份))
-    
-    坐标轴.legend()
-    坐标轴.grid(True)
-    plt.show()
-    '''
-
-    '''
-    # 环渤海——北京、天津、青岛——生长曲线拟合
-    # Data
-
-    cities = ['beijing', 'tianjin', 'qingdao']
-
-    # Cities' data
-    datas_nan = {city: readData("csv/{}14chengnan.csv".format(city)).truncate(11) for city in cities}
-    datas_nv  = {city: readData("csv/{}14chengnv.csv".format(city)).truncate(11)  for city in cities}
-
-    # Fit
-    fits_nan = {city: CurveFit.fit(datas_nan[city], zg05nan.get_linear_interpolation()) for city in cities}
-    fits_nv  = {city: CurveFit.fit(datas_nv[city] , zg05nv.get_linear_interpolation() ) for city in cities}
-
-    # Set up plot
-    x = np.linspace(7, 18, 100)
-    
-    # 配色方案
-    # bj14 = r/tab:pink, bj01 = b/tab:cyan, jpn = g:tab:olive
-    color_data = {'beijing': 'r', 'tianjin': 'g', 'qingdao': 'b'}
-    color_fit = {'beijing': 'tab:pink', 'tianjin':'tab:olive', 'qingdao':'tab:cyan'}
-    # Plot 
-    # Plot nan
-    fig_nan = plt.figure()
-    ax_nan = fig_nan.add_subplot(1, 1, 1)
-    for city in cities:
-        ax_nan.errorbar(datas_nan[city].x_array, datas_nan[city].y_array, 2*datas_nan[city].std_deviations, 
-                    fmt='x{}'.format(color_data[city]), label='{}-nan'.format(city))
-        ax_nan.plot(x, np.vectorize(fits_nan[city][1])(x),
-                    color=color_fit[city], label='{}-nan-nihe'.format(city))
-    ax_nan.legend()
-    ax_nan.grid(True)
-    plt.savefig("fit_nan.png",dpi=600)
-    # Plot nv
-    fig_nv = plt.figure()
-    ax_nv = fig_nv.add_subplot(1, 1, 1)
-    for city in cities:
-        ax_nv.errorbar(datas_nv[city].x_array, datas_nv[city].y_array, 2*datas_nv[city].std_deviations, 
-                    fmt='x{}'.format(color_data[city]), label='{}-nv'.format(city))
-        ax_nv.plot(x, np.vectorize(fits_nv[city][1])(x),
-                    color=color_fit[city], label='{}-nv-nihe'.format(city))
-    ax_nv.legend()
-    ax_nv.grid(True)
-    plt.savefig("fit_nv.png",dpi=600)
-    '''
+    places = {1991: ["shijiazhuang", "taiyuan", "hohhot","changchun","harbin", "zhengzhou", "xian", "lanzhou", "xining", "yinchuan", "urumqi"],
+              1979: ["taiyuan", "harbin","xian", "lanzhou"]}
+    for year, placeList in places.items():
+        if (year == 1991):
+            age = 18.5
+            print("城市,18.5岁城市汉族男性平均身高")
+        if (year == 1979):
+            age = 17.5
+            print("城市,17.5岁城市汉族男性平均身高")
+        for place in placeList:
+            print(place + ",", end="")
+            #print(year, place)
+            analyze("csv/{}{}chengnan.csv".format(place, year),age,action="print")
+            #if (year == 1979 and place == "taiyuan"):
+            #    analyze("csv/{}{}chengnan.csv".format(place, year),age,action="plot")

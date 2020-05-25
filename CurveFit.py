@@ -6,9 +6,9 @@ from scipy import optimize
 
 class Data:
     def __init__(self, x_array, y_array, std_deviations, system_error=0.0):
-        self.x_array = x_array
-        self.y_array = y_array
-        self.std_deviations = np.sqrt(std_deviations**2 + system_error**2)
+        self.x_array = np.array(x_array)
+        self.y_array = np.array(y_array)
+        self.std_deviations = np.array(np.sqrt(std_deviations**2 + system_error**2))
         self.linear_interpolate()
 
     def linear_interpolate(self):
@@ -21,6 +21,10 @@ class Data:
         y_array_truncated = np.delete(self.y_array, n)
         std_deviations_truncated = np.delete(self.std_deviations, n)
         return Data(x_array_truncated, y_array_truncated, std_deviations_truncated)
+
+    def delete_age_group(self, age):
+        indices = np.where(self.x_array == age)[0]
+        return self.truncate(indices)
     
     def get_linear_interpolation(self):
         return self.linear_interpolation
